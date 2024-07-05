@@ -31,104 +31,90 @@ local Window = Rayfield:CreateWindow({
 local LegitTab = Window:CreateTab("Legit", nil) -- Title, Image
 local LegitSection = LegitTab:CreateSection("AutoGreen")
 
--- Initialize the autoGreenEnabled variable
 local autoGreenEnabled = false
 
--- Create Toggle
 local Toggle = LegitTab:CreateToggle({
-   Name = "AutoGreen",
-   CurrentValue = false,
-   Flag = "Toggle1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
-   Callback = function(Value)
-      autoGreenEnabled = Value
-   end,
+    Name = "AutoGreen",
+    CurrentValue = false,
+    Flag = "Toggle1",
+    Callback = function(Value)
+        autoGreenEnabled = Value
+    end,
 })
 
--- Services
-local UserInputService = game:GetService("UserInputService")
-local VirtualInputManager = game:GetService("VirtualInputManager")
+local u = game:GetService("UserInputService")
+local v = game:GetService("VirtualInputManager")
 
--- Variables
-local triggerKey = Enum.KeyCode.Q
-local holdKey = Enum.KeyCode.E
-local holdDuration = 0.335
+local tK = Enum.KeyCode.Q
+local hK = Enum.KeyCode.E
+local hD = 0.335
 
--- Function to simulate pressing and holding the 'E' key
-local function simulateKeyPress(key, duration)
-    VirtualInputManager:SendKeyEvent(true, key, false, game)
-    wait(duration)
-    VirtualInputManager:SendKeyEvent(false, key, false, game)
+local function sKP(k, d)
+    v:SendKeyEvent(true, k, false, game)
+    wait(d)
+    v:SendKeyEvent(false, k, false, game)
 end
 
--- Event listener for key press
-local function onKeyPress(input, gameProcessedEvent)
-    if gameProcessedEvent then
-        return
-    end
-    
-    if input.KeyCode == triggerKey then
-        -- Check if the AutoGreen toggle is enabled
-        if autoGreenEnabled then
-            simulateKeyPress(holdKey, holdDuration)
-        end
+local function oKP(i, g)
+    if g then return end
+    if i.KeyCode == tK and autoGreenEnabled then
+        sKP(hK, hD)
     end
 end
 
--- Connect the event listener
-UserInputService.InputBegan:Connect(onKeyPress)
+u.InputBegan:Connect(oKP)
+-------------------------------------------------
 
 local LegitSection = LegitTab:CreateSection("Shift Teleport")
 
-local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
-local userInputService = game:GetService("UserInputService")
+local p = game.Players.LocalPlayer
+local c = p.Character or p.CharacterAdded:Wait()
+local h = c:WaitForChild("Humanoid")
+local u = game:GetService("UserInputService")
 
-local TELEPORT_DISTANCE = 0  -- Default value
-local MOVEMENT_THRESHOLD = 0.1  -- Adjust this threshold as needed
+local d = 0
+local m = 0.1
 
--- Function to handle teleportation
-local function teleport(direction)
-    local rootPart = character:WaitForChild("HumanoidRootPart")
-    local newPosition = rootPart.Position + direction * TELEPORT_DISTANCE
-    rootPart.CFrame = CFrame.new(newPosition)
+local function t(dir)
+    local r = c:WaitForChild("HumanoidRootPart")
+    local n = r.Position + dir * d
+    r.CFrame = CFrame.new(n)
 end
 
--- Listen for input events
-userInputService.InputBegan:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.RightShift then
-        local direction = humanoid.MoveDirection
-        -- Check if the magnitude of direction vector is greater than the threshold
-        if direction.magnitude > MOVEMENT_THRESHOLD then
-            direction = direction.Unit * Vector3.new(direction.X, 0, direction.Z).Magnitude
-            teleport(direction)
+u.InputBegan:Connect(function(i)
+    if i.KeyCode == Enum.KeyCode.LeftShift or i.KeyCode == Enum.KeyCode.RightShift then
+        local dir = h.MoveDirection
+        if dir.magnitude > m then
+            dir = dir.Unit * Vector3.new(dir.X, 0, dir.Z).Magnitude
+            t(dir)
         end
     end
 end)
 
-userInputService.InputEnded:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.RightShift then
-        -- You can add code here for when Shift is released, if needed
+u.InputEnded:Connect(function(i)
+    if i.KeyCode == Enum.KeyCode.LeftShift or i.KeyCode == Enum.KeyCode.RightShift then
+        -- Code for when Shift is released (if needed)
     end
 end)
 
--- Slider to adjust TELEPORT_DISTANCE
 local Slider = LegitTab:CreateSlider({
-   Name = "ShiftTeleport Recommended - (0.5)",
-   Range = {0, 5},
-   Increment = 0.1,
-   Suffix = "Teleport",
-   CurrentValue = 0,  -- Set a default value
-   Flag = "Slider1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
-   Callback = function(Value)
-       TELEPORT_DISTANCE = Value
-   end,
+    Name = "ShiftTeleport Recommended - (0.5)",
+    Range = {0, 5},
+    Increment = 0.1,
+    Suffix = "Teleport",
+    CurrentValue = 0,
+    Flag = "Slider1",
+    Callback = function(v)
+        d = v
+    end,
 })
 
---BLATANT
+-------------------------------------------------
 
 local BlatantTab = Window:CreateTab("Blatant", nil)
 local Section = BlatantTab:CreateSection("AutoBlock")
+
+-------------------------------------------------
 
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
@@ -203,171 +189,142 @@ Toggle.Callback = function(Value)
         spawn(autoblock)
     end
 end
+-------------------------------------------------
 
 local Section = BlatantTab:CreateSection("Teleporting to the ball")
 
-local player = game.Players.LocalPlayer
-local userInputService = game:GetService("UserInputService")
-local maxDistance = 50  -- Set your desired maximum distance to teleport
-local teleportballKey = Enum.KeyCode.F  -- Key to press for teleporting to the ball
-local ballteleportvalue = false  -- Default value for the TeleportToBall toggle
+-------------------------------------------------
 
--- Function to find the nearest basketball
-local function getNearestBasketball()
-    local v1 = player
-    local v2 = v1.Character or v1.CharacterAdded:Wait()
-    local v3 = v2:WaitForChild("HumanoidRootPart")
-    local v4 = nil
-    local v5 = math.huge
-    for v6, v7 in pairs(workspace:GetChildren()) do
-        if v7:IsA("BasePart") and v7.Name == "Basketball" then
-            local v8 = (v7.Position - v3.Position).Magnitude
-            if v8 < v5 then
-                v5 = v8
-                v4 = v7
+local p = game.Players.LocalPlayer
+local u = game:GetService("UserInputService")
+local d = 50  -- Max distance
+local k = Enum.KeyCode.F  -- Teleport key
+local t = false  -- TeleportToBall toggle
+
+-- Find the nearest basketball
+local function gNB()
+    local c = p.Character or p.CharacterAdded:Wait()
+    local h = c:WaitForChild("HumanoidRootPart")
+    local b, minDist = nil, math.huge
+    for _, o in pairs(workspace:GetChildren()) do
+        if o:IsA("BasePart") and o.Name == "Basketball" then
+            local dist = (o.Position - h.Position).Magnitude
+            if dist < minDist then
+                minDist = dist
+                b = o
             end
         end
     end
-    return v4, v5
+    return b, minDist
 end
 
--- Function to teleport to the nearest basketball
-local function teleportToBall()
-    local v1, v2 = getNearestBasketball()
-    if v1 and v2 <= maxDistance then
-        local v3 = player
-        local v4 = v3.Character or v3.CharacterAdded:Wait()
-        local v5 = v4:WaitForChild("HumanoidRootPart")
-        local v6 = v4:FindFirstChildOfClass("Humanoid")
-        if v6 and v6.Sit then
-            v6.Sit = false
+-- Teleport to the nearest basketball
+local function tTB()
+    local b, dist = gNB()
+    if b and dist <= d then
+        local c = p.Character or p.CharacterAdded:Wait()
+        local h = c:WaitForChild("HumanoidRootPart")
+        local hum = c:FindFirstChildOfClass("Humanoid")
+        if hum and hum.Sit then hum.Sit = false end
+        for _, p in ipairs(c:GetDescendants()) do
+            if p:IsA("BasePart") then p.CanCollide = false end
         end
-        for v10, v11 in ipairs(v4:GetDescendants()) do
-            if v11:IsA("BasePart") then
-                v11.CanCollide = false
-            end
-        end
-        v5.Velocity = Vector3.new(0, 0, 0)
-        v5.CFrame = v1.CFrame
+        h.Velocity = Vector3.new()
+        h.CFrame = b.CFrame
         wait(0.1)
-        for v12, v13 in ipairs(v4:GetDescendants()) do
-            if v13:IsA("BasePart") then
-                v13.CanCollide = true
-            end
+        for _, p in ipairs(c:GetDescendants()) do
+            if p:IsA("BasePart") then p.CanCollide = true end
         end
     end
 end
 
--- Toggle to enable/disable TeleportToBall
+-- Toggle for teleport to ball
 local Toggle = BlatantTab:CreateToggle({
-   Name = "Teleport To Ball | F",
-   CurrentValue = false,
-   Flag = "Toggle2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
-   Callback = function(Value)
-       ballteleportvalue = Value  -- Update the ballteleportvalue based on the toggle
-   end,
+    Name = "Teleport To Ball | F",
+    CurrentValue = false,
+    Flag = "T2",
+    Callback = function(v)
+        t = v
+    end,
 })
 
--- Listen for key presses to teleport to the ball if the toggle is enabled
-userInputService.InputBegan:Connect(function(input, gameProcessed)
-    if input.KeyCode == teleportballKey and not gameProcessed then
-        if ballteleportvalue then
-            teleportToBall()
-        end
+-- Listen for key press
+u.InputBegan:Connect(function(i)
+    if i.KeyCode == k and t then
+        tTB()
     end
 end)
 
+
+-------------------------------------------------
+
 local Section = BlatantTab:CreateSection("PhaseTeleportation")
 
-local player = game.Players.LocalPlayer
-local userInputService = game:GetService("UserInputService")
+-------------------------------------------------
 
-local PhaseValue = false  -- Default value for the Phase toggle
-local phaseKey = Enum.KeyCode.J  -- Key to press for the Phase feature
+local p = game.Players.LocalPlayer
+local u = game:GetService("UserInputService")
 
--- Function to handle the Phase feature
-local function Phase(input, gameProcessedEvent)
-    local character = player.Character
-    if not character or gameProcessedEvent then
-        return
-    end
+local v = false  -- Phase toggle value
+local k = Enum.KeyCode.J  -- Phase key
 
-    if input.KeyCode == phaseKey and PhaseValue == true then
-        local savedPosition = character:FindFirstChild("SavedPosition")
-        if savedPosition then
-            character:SetPrimaryPartCFrame(CFrame.new(savedPosition.Value))
-            savedPosition:Destroy()
+-- Handle the Phase feature
+local function Ph(i, g)
+    if not p.Character or g then return end
+    local sP = p.Character:FindFirstChild("SavedPosition")
+    if i.KeyCode == k and v then
+        if sP then
+            p.Character:SetPrimaryPartCFrame(CFrame.new(sP.Value))
+            sP:Destroy()
         else
-            local savedPositionValue = Instance.new("Vector3Value")
-            savedPositionValue.Name = "SavedPosition"
-            savedPositionValue.Value = character.PrimaryPart.Position
-            savedPositionValue.Parent = character
+            local sp = Instance.new("Vector3Value", p.Character)
+            sp.Name = "SavedPosition"
+            sp.Value = p.Character.PrimaryPart.Position
         end
     end
 end
 
--- Toggle to enable/disable Phase feature
+-- Toggle for the Phase feature
 local PhaseToggle = BlatantTab:CreateToggle({
-   Name = "Phase",
-   CurrentValue = false,
-   Flag = "Toggle3", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
-   Callback = function(Value)
-       PhaseValue = Value  -- Update the PhaseValue based on the toggle
-   end,
+    Name = "Phase",
+    CurrentValue = false,
+    Flag = "T3",
+    Callback = function(val)
+        v = val
+    end,
 })
 
--- Listen for key presses to activate the Phase feature if the toggle is enabled
-userInputService.InputBegan:Connect(Phase)
+-- Listen for key presses
+u.InputBegan:Connect(Ph)
+
+
+-------------------------------------------------
 
 local OtherTab = Window:CreateTab("Other", nil)
 local Section = OtherTab:CreateSection("FovChanger")
 
-local player = game.Players.LocalPlayer
-local camera = game.Workspace.CurrentCamera
+-------------------------------------------------
 
--- Create the Adaptive Input UI component for the FOV Changer
+local c = workspace.CurrentCamera
+local f = c.FieldOfView
+
 local Input = OtherTab:CreateInput({
-   Name = "FOV Changer",
-   PlaceholderText = tostring(camera.FieldOfView),  -- Set initial text to current FOV
-   RemoveTextAfterFocusLost = false,
-   Callback = function(Text)
-       local newFOV = tonumber(Text)
-       if newFOV and newFOV >= 1 and newFOV <= 120 then
-           camera.FieldOfView = newFOV
-           Input:SetPlaceholderText(tostring(newFOV))  -- Update placeholder text with the new FOV
-           saveFOV()  -- Save the FOV setting
-       else
-           Input:SetPlaceholderText("Invalid FOV! Enter a value between 1 and 120.")
-       end
-   end,
+    Name = "FOV",
+    PlaceholderText = "Enter FOV",
+    Callback = function(t)
+        local n = tonumber(t)
+        if n and n > 0 then
+            f = n
+            c.FieldOfView = f
+        end
+    end,
 })
 
--- Function to save the FOV setting
-local function saveFOV()
-    local fovSetting = Instance.new("StringValue")
-    fovSetting.Name = "FOVSetting"
-    fovSetting.Value = tostring(camera.FieldOfView)
-    fovSetting.Parent = player:FindFirstChild("PlayerGui")
-end
-
--- Function to load the FOV setting
-local function loadFOV()
-    local fovSetting = player:FindFirstChild("PlayerGui"):FindFirstChild("FOVSetting")
-    if fovSetting then
-        local savedFOV = tonumber(fovSetting.Value)
-        if savedFOV and savedFOV >= 1 and savedFOV <= 120 then
-            camera.FieldOfView = savedFOV
-            Input:SetText(tostring(savedFOV))  -- Update the text box with the saved FOV
-        end
-    end
-end
-
--- Load the FOV when the script starts
-loadFOV()
-
--- Save the FOV when the player leaves the game
-player.AncestryChanged:Connect(function(_, parent)
-    if not parent then
-        saveFOV()
+game:GetService("RunService").RenderStepped:Connect(function()
+    if c.FieldOfView ~= f then
+        c.FieldOfView = f
     end
 end)
+-------------------------------------------------
+
+
